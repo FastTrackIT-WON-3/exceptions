@@ -7,12 +7,22 @@ namespace Exceptions
     {
         static void Main(string[] args)
         {
-            string[] list = StringArrayGenerator.RepeatString(10_000, "abc");
-
-            Stopwatch watch1 = Stopwatch.StartNew();
-            int[] integerArray1 = ConvertToIntArray_Normal(list);
-            watch1.Stop();
-            Console.WriteLine($"(1) List converted in {watch1.ElapsedMilliseconds} ms");
+            try
+            {
+                ExampleWithExceptionFilters();
+            }
+            catch (FileProcessingException otherEx)
+            {
+                Console.WriteLine("Other exception occured!");
+                Console.WriteLine(otherEx.Message);
+                Console.WriteLine(otherEx.StackTrace);
+                if (otherEx.InnerException is not null)
+                {
+                    Console.WriteLine("Inner exception:");
+                    Console.WriteLine(otherEx.InnerException.Message);
+                    Console.WriteLine(otherEx.InnerException.StackTrace);
+                }
+            }
         }
 
         private static int[] ConvertToIntArray_Normal(string[] stringArray)
@@ -37,6 +47,7 @@ namespace Exceptions
             return result;
         }
 
+
         private static void ExampleWithExceptionFilters()
         {
             try
@@ -56,24 +67,26 @@ namespace Exceptions
 
                 FileProcessor.ReplaceText(directory, fileName, lookupText, replaceWithText);
             }
-            catch (ArgumentNullException argEx) when (ExceptionFilters.IsDirectoryOrFileException(argEx))
-            {
-                Console.WriteLine("Directory or file exception!");
-                Console.WriteLine(argEx.Message);
-                Console.WriteLine(argEx.StackTrace);
-            }
-            catch (ArgumentNullException argEx) when (ExceptionFilters.IsFileContentReplaceException(argEx))
-            {
-                Console.WriteLine("Content replace exception!");
-                Console.WriteLine(argEx.Message);
-                Console.WriteLine(argEx.StackTrace);
-            }
             catch (Exception otherEx)
             {
-                Console.WriteLine("Other exception occured!");
+                Console.WriteLine("An error has occured!");
                 Console.WriteLine(otherEx.Message);
                 Console.WriteLine(otherEx.StackTrace);
+
+                throw new FileProcessingException(
+                    "Something went wrong with the file processing",
+                    otherEx);
             }
+        }
+
+        private static void ExampleWithExceptionPerformance()
+        {
+            string[] list = StringArrayGenerator.RepeatString(10_000, "abc");
+
+            Stopwatch watch1 = Stopwatch.StartNew();
+            int[] integerArray1 = ConvertToIntArray_Normal(list);
+            watch1.Stop();
+            Console.WriteLine($"(1) List converted in {watch1.ElapsedMilliseconds} ms");
         }
     }
 }
